@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useReducer } from 'react';
 import { applyHonorValuesToHand, createFreshDeck, createHandRecord, createInitialHand, createInitialHonorValues, loadLeaderboard, resolveRound, saveLeaderboard, seedLeaderboard, shuffleTiles, updateHonorValuesForOutcome } from './engine';
-import { BetChoice, GameState, RoundHistoryEntry } from './types';
+import { BetChoice, GameState, RoundHistoryEntry, HandRecord } from './types';
 
 interface Action {
-  type: 'start' | 'bet' | 'exit' | 'restart' | 'return-home' | 'load-leaderboard' | 'clear-toasts';
+  type: 'start' | 'bet' | 'exit' | 'restart' | 'return-home' | 'load-leaderboard' | 'clear-toasts' | 'announce-reshuffle';
   choice?: BetChoice;
   settings?: { handSize: number; copiesPerCategory?: { numbers: number; winds: number; dragons: number } };
 }
@@ -18,14 +18,28 @@ function appendToasts(existing: string[], nextMessages: string[]) {
   return [...existing, ...nextMessages];
 }
 
+function reshuffleDrawPile(
+  copiesConfig: { numbers: number; winds: number; dragons: number } | number,
+  drawPile: GameState['drawPile'],
+  discardPile: GameState['discardPile'],
+) {
+  return shuffleTiles([...createFreshDeck(copiesConfig as any), ...drawPile, ...discardPile]);
+}
+
 function autoSkipShortRounds(state: GameState): GameState {
   if (state.status !== 'game' || !state.currentHand) {
     return state;
   }
 
-  if (state.drawPile.length >= state.currentHand.tiles.length) {
+  const handSize = state.settings?.handSize ?? state.currentHand.tiles.length;
+
+  // If the draw pile is empty, normal reshuffle logic should handle it.
+  // Auto-skip only when there are some tiles but fewer than a full hand.
+  if (state.drawPile.length === 0 || state.drawPile.length >= handSize) {
     return state;
   }
+
+  const copiesConfig = buildCopyConfig(state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 });
 
   const skippedHand = createHandRecord({
     hand: state.currentHand.tiles,
@@ -45,7 +59,7 @@ function autoSkipShortRounds(state: GameState): GameState {
     comparedTo: state.currentHand.comparedTo,
   });
 
-  const reshuffled = shuffleTiles([...state.drawPile, ...state.discardPile, ...state.currentHand.tiles]);
+  const reshuffled = reshuffleDrawPile(copiesConfig, state.drawPile, state.discardPile);
   const skippedEntry: RoundHistoryEntry = {
     prev: skippedHand,
     next: returnedTilesHand,
@@ -60,7 +74,7 @@ function autoSkipShortRounds(state: GameState): GameState {
     round: state.round + 1,
     drawPile: reshuffled,
     discardPile: [],
-    currentHand: returnedTilesHand,
+    currentHand: state.currentHand,
     history,
     exhaustionCount: state.exhaustionCount + 1,
     lastOutcome: null,
@@ -99,6 +113,17 @@ function reducer(state: GameState, action: Action): GameState {
         ...state,
         toasts: [],
       };
+    case 'announce-reshuffle': {
+      const copiesConfig = buildCopyConfig(state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 });
+      const reshuffled = shuffleTiles([...createFreshDeck(copiesConfig as any), ...state.discardPile]);
+      return {
+        ...state,
+        drawPile: reshuffled,
+        discardPile: [],
+        exhaustionCount: state.exhaustionCount + 1,
+        toasts: appendToasts(state.toasts, ['Reshuffling deck.']),
+      };
+    }
     case 'start': {
       const handSize = action.settings?.handSize ?? 4;
       const copiesConfig = buildCopyConfig(action.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 });
@@ -131,7 +156,7 @@ function reducer(state: GameState, action: Action): GameState {
       const copiesConfig = buildCopyConfig(state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 });
       const reshuffleOccurred = state.drawPile.length === 0;
       const reshuffledDrawPile = reshuffleOccurred
-        ? shuffleTiles([...createFreshDeck(copiesConfig as any), ...state.discardPile])
+        ? reshuffleDrawPile(copiesConfig, state.drawPile, state.discardPile)
         : state.drawPile;
 
       const round = resolveRound({
@@ -139,13 +164,25 @@ function reducer(state: GameState, action: Action): GameState {
         nextDrawPile: reshuffledDrawPile,
         discardPile: state.discardPile,
         choice: action.choice,
-        exhaustionCount: state.exhaustionCount + (reshuffleOccurred ? 1 : 0),
+        // do not pre-increment exhaustionCount here; resolveRound will
+        // increment based on whether the remaining pile after draw is empty
+        exhaustionCount: state.exhaustionCount,
         round: state.round,
         currentScore: state.score,
       });
 
       const nextHonorValues = updateHonorValuesForOutcome(state.honorValues, state.currentHand.tiles, round.outcome);
-      const nextActiveHand = createHandRecord({
+      const shouldReshuffleNow = !round.isGameOver && round.updatedDrawPile.length === 0;
+      const nextDrawPile = shouldReshuffleNow
+        ? reshuffleDrawPile(copiesConfig, round.updatedDrawPile, round.updatedDiscardPile)
+        : round.updatedDrawPile;
+      const nextDiscardPile = shouldReshuffleNow ? [] : round.updatedDiscardPile;
+
+      // If the round outcome was a push (equal hands), treat the round as skipped:
+      // - record it in history with `skipped: true`
+      // - don't award points
+      // - clear the bet/outcome on the recorded hands
+      let nextActiveHand = createHandRecord({
         hand: applyHonorValuesToHand(round.nextHand.tiles, nextHonorValues),
         roundNumber: round.nextHand.roundNumber,
         bet: round.nextHand.bet,
@@ -154,14 +191,34 @@ function reducer(state: GameState, action: Action): GameState {
         comparedTo: round.nextHand.comparedTo,
       });
 
-      const resolvedPrevHand = {
+      let resolvedPrevHand: HandRecord = {
         ...state.currentHand,
         outcome: round.outcome,
         roundPoints: round.nextHand.roundPoints,
         comparedTo: round.nextHand.comparedTo,
       };
 
-      const history = [{ prev: resolvedPrevHand, next: round.nextHand, honorValuesAfter: nextHonorValues }, ...state.history];
+      let historyEntry = { prev: resolvedPrevHand, next: round.nextHand, honorValuesAfter: nextHonorValues } as any;
+
+      if (round.outcome === 'push') {
+        // mark both hands as having no bet/outcome and zero points
+        const clearedPrev = { ...state.currentHand, outcome: null, roundPoints: 0, bet: null, comparedTo: round.nextHand.comparedTo };
+        const clearedNext = { ...round.nextHand, outcome: null, roundPoints: 0, bet: null };
+
+        resolvedPrevHand = clearedPrev;
+        nextActiveHand = createHandRecord({
+          hand: applyHonorValuesToHand(clearedNext.tiles, nextHonorValues),
+          roundNumber: clearedNext.roundNumber,
+          bet: null,
+          outcome: null,
+          roundPoints: 0,
+          comparedTo: clearedNext.comparedTo,
+        });
+
+        historyEntry = { prev: clearedPrev, next: clearedNext, honorValuesAfter: nextHonorValues, skipped: true };
+      }
+
+      const history = [historyEntry, ...state.history];
       const nextLeaderboard = round.isGameOver
         ? saveLeaderboard(
             state.leaderboard,
@@ -180,14 +237,14 @@ function reducer(state: GameState, action: Action): GameState {
         status: round.isGameOver ? 'gameOver' : 'game',
         score: round.updatedScore,
         round: round.nextRound,
-        drawPile: round.updatedDrawPile,
-        discardPile: round.updatedDiscardPile,
+        drawPile: nextDrawPile,
+        discardPile: nextDiscardPile,
         currentHand: nextActiveHand,
         history,
         exhaustionCount: round.updatedExhaustionCount,
         lastOutcome: round.outcome,
         lastBet: action.choice ?? null,
-        toasts: reshuffleOccurred ? ['Reshuffling deck.'] : [],
+        toasts: shouldReshuffleNow ? appendToasts(state.toasts, ['Reshuffling deck.']) : state.toasts,
         leaderboard: nextLeaderboard,
         honorValues: nextHonorValues,
       };
