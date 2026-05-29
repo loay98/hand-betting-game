@@ -3,6 +3,15 @@ export type BetChoice = 'higher' | 'lower';
 export type RoundOutcome = 'win' | 'loss' | 'push';
 export type Screen = 'landing' | 'game' | 'gameOver';
 
+export interface GameSettings {
+  readonly handSize: number;
+  readonly copiesPerCategory: {
+    readonly numbers: number;
+    readonly winds: number;
+    readonly dragons: number;
+  };
+}
+
 export interface TileDefinition {
   readonly kind: TileCategory;
   readonly label: string;
@@ -60,14 +69,7 @@ export interface GameState {
   readonly toasts: string[];
   readonly leaderboard: LeaderboardEntry[];
   readonly honorValues: Record<string, number>;
-  readonly settings?: {
-    readonly handSize: number;
-    readonly copiesPerCategory: {
-      readonly numbers: number;
-      readonly winds: number;
-      readonly dragons: number;
-    };
-  };
+  readonly settings: GameSettings;
 }
 
 export interface RoundResult {

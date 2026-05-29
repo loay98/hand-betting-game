@@ -1,24 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useGameStore } from '../store/gameStore';
 
-type Settings = {
-  handSize: number;
-  copiesPerCategory: { numbers: number; winds: number; dragons: number };
-};
-
-interface Props {
-  settings: Settings;
-  onChange: (next: Settings) => void;
-}
-
-export function SettingsPanel({ settings, onChange }: Props) {
+export function SettingsPanel() {
+  const settings = useGameStore((state) => state.settings);
+  const setSettings = useGameStore((state) => state.setSettings);
   const [handSizeStr, setHandSizeStr] = useState(String(settings.handSize));
   const [numbersStr, setNumbersStr] = useState(String(settings.copiesPerCategory.numbers));
   const [windsStr, setWindsStr] = useState(String(settings.copiesPerCategory.winds));
   const [dragonsStr, setDragonsStr] = useState(String(settings.copiesPerCategory.dragons));
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
-  // toast is shown in the top-right corner; no per-input anchoring needed
 
   useEffect(() => {
     setHandSizeStr(String(settings.handSize));
@@ -34,51 +27,54 @@ export function SettingsPanel({ settings, onChange }: Props) {
     }
   }
 
-  useEffect(() => () => { clearToastTimer(); }, []);
+  useEffect(() => () => {
+    clearToastTimer();
+  }, []);
+
+  const onKeyApply = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      applyChanges();
+    }
+  };
 
   function clampInt(valueStr: string, min: number, max: number) {
-    const parsed = parseInt(valueStr, 10);
-    const fallback = isNaN(parsed) ? min : parsed;
+    const parsed = Number.parseInt(valueStr, 10);
+    const fallback = Number.isNaN(parsed) ? min : parsed;
     const clamped = Math.max(min, Math.min(max, fallback));
     return { value: clamped, adjusted: String(clamped) !== String(valueStr) };
   }
 
   function applyChanges() {
-    const hsRes = clampInt(handSizeStr, 4, 9);
-    const numsRes = clampInt(numbersStr, 1, 12);
-    const windsRes = clampInt(windsStr, 1, 12);
-    const dragonsRes = clampInt(dragonsStr, 1, 12);
+    const handSize = clampInt(handSizeStr, 4, 9);
+    const numbers = clampInt(numbersStr, 1, 12);
+    const winds = clampInt(windsStr, 1, 12);
+    const dragons = clampInt(dragonsStr, 1, 12);
 
     const messages: string[] = [];
-    if (hsRes.adjusted) messages.push(`Hand size adjusted to ${hsRes.value} (allowed 4–9)`);
-    if (numsRes.adjusted) messages.push(`Number tiles copies adjusted to ${numsRes.value} (allowed 1–12)`);
-    if (windsRes.adjusted) messages.push(`Wind tiles copies adjusted to ${windsRes.value} (allowed 1–12)`);
-    if (dragonsRes.adjusted) messages.push(`Dragon tiles copies adjusted to ${dragonsRes.value} (allowed 1–12)`);
+    if (handSize.adjusted) messages.push(`Hand size adjusted to ${handSize.value} (allowed 4-9)`);
+    if (numbers.adjusted) messages.push(`Number tiles copies adjusted to ${numbers.value} (allowed 1-12)`);
+    if (winds.adjusted) messages.push(`Wind tiles copies adjusted to ${winds.value} (allowed 1-12)`);
+    if (dragons.adjusted) messages.push(`Dragon tiles copies adjusted to ${dragons.value} (allowed 1-12)`);
 
-    // Update inputs to adjusted values so user sees the correction
-    setHandSizeStr(String(hsRes.value));
-    setNumbersStr(String(numsRes.value));
-    setWindsStr(String(windsRes.value));
-    setDragonsStr(String(dragonsRes.value));
+    setHandSizeStr(String(handSize.value));
+    setNumbersStr(String(numbers.value));
+    setWindsStr(String(winds.value));
+    setDragonsStr(String(dragons.value));
 
-      // Notify via toast if any adjustments were made (fixed top-right)
-      if (messages.length > 0) {
-        setToastMessage(messages.join(' — '));
-        clearToastTimer();
-        toastTimer.current = window.setTimeout(() => { setToastMessage(null); toastTimer.current = null; }, 3000);
-      }
+    if (messages.length > 0) {
+      setToastMessage(messages.join(' - '));
+      clearToastTimer();
+      toastTimer.current = window.setTimeout(() => {
+        setToastMessage(null);
+        toastTimer.current = null;
+      }, 3000);
+    }
 
-    onChange({
-      handSize: hsRes.value,
-      copiesPerCategory: { numbers: numsRes.value, winds: windsRes.value, dragons: dragonsRes.value },
+    setSettings({
+      handSize: handSize.value,
+      copiesPerCategory: { numbers: numbers.value, winds: winds.value, dragons: dragons.value },
     });
   }
-
-  const onKeyApply = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') applyChanges();
-  };
-
-  // validation now auto-corrects on apply; inline error boxes removed in favor of transient toast notifications
 
   return (
     <div className="settings-body">
@@ -147,12 +143,18 @@ export function SettingsPanel({ settings, onChange }: Props) {
           />
         </div>
       </div>
-      {toastMessage && typeof document !== 'undefined' && createPortal(
-        <div className="toast" role="status">{toastMessage}</div>,
-        document.body,
-      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button className="ghost-button" type="button" onClick={applyChanges} style={{ minWidth: 128 }}>
+          Apply settings
+        </button>
+      </div>
+
+      {toastMessage && typeof document !== 'undefined'
+        ? createPortal(
+            <div className="toast" role="status">{toastMessage}</div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
-
-export default SettingsPanel;

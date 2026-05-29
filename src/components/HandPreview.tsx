@@ -1,4 +1,5 @@
-import type { HandRecord, BetChoice, RoundOutcome } from '../game/types';
+import type { BetChoice, HandRecord, RoundOutcome } from '../game/types';
+import { SectionHeading } from './ui/section-heading';
 import { TileCard } from './TileCard';
 
 interface HandPreviewProps {
@@ -12,10 +13,7 @@ interface HandPreviewProps {
 export function HandPreview({ hand, title, tone = 'active', lastBet, lastOutcome }: HandPreviewProps) {
   return (
     <section className={`panel hand-preview hand-preview--${tone}`}>
-      <div className="panel__heading">
-        <p className="eyebrow">{title}</p>
-        <h2>{hand.total} points</h2>
-      </div>
+      <SectionHeading eyebrow={title} title={`${hand.total} points`} />
       <div className="hand-preview__tiles">
         {hand.tiles.map((tile) => (
           <TileCard key={tile.uid} tile={tile} compact={tone === 'history'} />

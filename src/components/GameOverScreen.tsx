@@ -1,18 +1,21 @@
 import { LeaderboardPanel } from './LeaderboardPanel';
-import type { GameState } from '../game/types';
+import { useGameStore } from '../store/gameStore';
+import { SectionHeading } from './ui/section-heading';
+import { Chip } from './ui/chip';
 
-interface GameOverScreenProps {
-  state: GameState;
-  onRestart: () => void;
-  onReturnHome: () => void;
-}
+export function GameOverScreen() {
+  const score = useGameStore((store) => store.score);
+  const round = useGameStore((store) => store.round);
+  const currentHand = useGameStore((store) => store.currentHand);
+  const exhaustionCount = useGameStore((store) => store.exhaustionCount);
+  const restartGame = useGameStore((store) => store.restartGame);
+  const returnHome = useGameStore((store) => store.returnHome);
 
-export function GameOverScreen({ state, onRestart, onReturnHome }: GameOverScreenProps) {
-  const limitTiles = state.currentHand?.tiles.filter((tile) => tile.value <= 0 || tile.value >= 10) ?? [];
+  const limitTiles = currentHand?.tiles.filter((tile) => tile.value <= 0 || tile.value >= 10) ?? [];
   const limitTileText = limitTiles.length > 0
     ? limitTiles.map((tile) => `${tile.label} reached ${tile.value}`).join(', ')
     : null;
-  const endTip = state.exhaustionCount >= 3
+  const endTip = exhaustionCount >= 3
     ? 'This run ended because the draw pile ran empty three times.'
     : limitTileText
       ? `This run ended because a tile value hit the limit. The tile${limitTiles.length > 1 ? 's that hit the limit were' : ' that hit the limit was'} ${limitTileText}.`
@@ -21,21 +24,32 @@ export function GameOverScreen({ state, onRestart, onReturnHome }: GameOverScree
   return (
     <main className="game-over-shell">
       <section className="panel game-over-card">
-        <p className="eyebrow">Game over</p>
-        <h1>Final score {state.score}</h1>
+        <SectionHeading eyebrow="Game over" title={`Final score ${score}`} as="h1" />
         <p>
-          You survived {state.round - 1} rounds.
+          You survived {round - 1} rounds.
         </p>
         <div className="game-over-tip" role="note">
           <strong>How the game ends:</strong>
           <span>{endTip}</span>
         </div>
+
+        {limitTiles.length > 0 ? (
+          <div className="history-pair__meta">
+            {limitTiles.map((tile) => (
+              <Chip key={tile.uid} variant="skip">
+                {tile.label} reached {tile.value}
+              </Chip>
+            ))}
+          </div>
+        ) : null}
+
         <div className="action-panel__buttons">
-          <button className="primary-button" type="button" onClick={onRestart}>Play again</button>
-          <button className="ghost-button" type="button" onClick={onReturnHome}>Back to landing</button>
+          <button className="primary-button" type="button" onClick={restartGame}>Play again</button>
+          <button className="ghost-button" type="button" onClick={returnHome}>Back to landing</button>
         </div>
       </section>
-      <LeaderboardPanel entries={state.leaderboard} />
+
+      <LeaderboardPanel />
     </main>
   );
 }

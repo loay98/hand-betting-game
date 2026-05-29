@@ -256,8 +256,6 @@ h1, h2, p {
   gap: 6px;
 }
 
-.game-topbar__specials-item,
-.game-topbar__honors-item,
 .game-topbar__specials-empty,
 .game-topbar__honors-empty {
   display: inline-flex;
@@ -272,6 +270,12 @@ h1, h2, p {
 
 .game-topbar__specials-item,
 .game-topbar__honors-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
   font-size: 0.78rem;
   line-height: 1;
   color: var(--text);

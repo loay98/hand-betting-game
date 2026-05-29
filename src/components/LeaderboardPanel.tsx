@@ -1,22 +1,23 @@
 import { HONOR_TILE_DEFINITIONS } from '../game/engine';
 import type { LeaderboardEntry } from '../game/types';
+import { useGameStore } from '../store/gameStore';
+import { SectionHeading } from './ui/section-heading';
+import { HonorPill } from './ui/honor-pill';
 
-interface LeaderboardPanelProps {
-  entries: LeaderboardEntry[];
+function renderCount(value: number | undefined) {
+  return typeof value === 'number' ? value : '—';
 }
 
-export function LeaderboardPanel({ entries }: LeaderboardPanelProps) {
-  const renderCount = (value: number | undefined) => (typeof value === 'number' ? value : '—');
+function renderEndLabel(endedBy?: LeaderboardEntry['endedBy']) {
+  if (!endedBy) {
+    return 'Ended: unknown';
+  }
 
-  const renderEndLabel = (endedBy?: LeaderboardEntry['endedBy']) => {
-    if (!endedBy) {
-      return 'Ended: unknown';
-    }
+  return endedBy === 'deckLimit' ? 'Ended: draw pile ran empty' : 'Ended: tile limit reached';
+}
 
-    return endedBy === 'deckLimit' ? 'Ended: draw pile ran empty' : 'Ended: tile limit reached';
-  };
-
-  const renderHonorSummary = (honorValues?: Record<string, number>) => (
+function HonorSummary({ honorValues }: { honorValues?: Record<string, number> }) {
+  return (
     <div className="leaderboard-list__honors">
       {HONOR_TILE_DEFINITIONS.map((tile) => {
         const key = `${tile.kind}:${tile.label}`;
@@ -26,36 +27,46 @@ export function LeaderboardPanel({ entries }: LeaderboardPanelProps) {
         const deltaLabel = delta > 0 ? `+${delta}` : `${delta}`;
 
         return (
-          <span
+          <HonorPill
             key={key}
             className={`leaderboard-list__honor leaderboard-list__honor--${tile.kind}`}
-            aria-label={`${tile.label} ${value} (${deltaLabel})`}
+            ariaLabel={`${tile.label} ${value} (${deltaLabel})`}
             title={`${tile.label} ${value} (${deltaLabel})`}
-          >
-            <span className="leaderboard-list__honor-icon" aria-hidden="true">{tile.symbol}</span>
-            <span className="leaderboard-list__honor-value">{value}</span>
-            <span className={`leaderboard-list__honor-delta leaderboard-list__honor-delta--${deltaClass}`}>
-              {delta === 0 ? '—' : deltaLabel}
-            </span>
-          </span>
+            symbol={tile.symbol}
+            value={value}
+            iconClassName="leaderboard-list__honor-icon"
+            valueClassName="leaderboard-list__honor-value"
+            deltaLabel={(
+              <span className={`leaderboard-list__honor-delta leaderboard-list__honor-delta--${deltaClass}`}>
+                {delta === 0 ? '—' : deltaLabel}
+              </span>
+            )}
+          />
         );
       })}
     </div>
   );
+}
+
+export function LeaderboardPanel() {
+  const entries = useGameStore((state) => state.leaderboard);
 
   return (
     <section className="panel leaderboard-panel">
-      <div className="panel__heading">
-        <p className="eyebrow">Leaderboard</p>
-        <h2>Top 5 high scores</h2>
-      </div>
+      <SectionHeading eyebrow="Leaderboard" title="Top 5 high scores" />
+
       {entries.length === 0 ? (
         <p className="panel__empty">Play a round to seed the board.</p>
       ) : (
         <ol className="leaderboard-list">
           {entries.map((entry, index) => (
-            <li key={entry.id} className="leaderboard-list__item">
-              <span className="leaderboard-list__rank">{index + 1}</span>
+            <li
+              key={entry.id}
+              className="leaderboard-list__item"
+            >
+              <span className="leaderboard-list__rank">
+                {index + 1}
+              </span>
               <div className="leaderboard-list__body">
                 <div className="leaderboard-list__summary">
                   <span className="leaderboard-list__score">{entry.score}</span>
@@ -67,7 +78,7 @@ export function LeaderboardPanel({ entries }: LeaderboardPanelProps) {
                   <span className="leaderboard-list__detail">Reshuffles: {renderCount(entry.reshuffles)}/3</span>
                 </div>
                 <span className="leaderboard-list__ending">{renderEndLabel(entry.endedBy)}</span>
-                {renderHonorSummary(entry.honorValues)}
+                <HonorSummary honorValues={entry.honorValues} />
               </div>
             </li>
           ))}

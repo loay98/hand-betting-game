@@ -1,15 +1,13 @@
-import type { LeaderboardEntry } from '../game/types';
 import { LeaderboardPanel } from './LeaderboardPanel';
-import SettingsPanel from './SettingsPanel';
+import { SettingsPanel } from './SettingsPanel';
+import { useGameStore } from '../store/gameStore';
+import { SectionHeading } from './ui/section-heading';
+import { StatCard } from './ui/stat-card';
 
-interface LandingPageProps {
-  leaderboard: LeaderboardEntry[];
-  onStart: (settings: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } }) => void;
-  settings: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } };
-  onSettingsChange: (next: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } }) => void;
-}
+export function LandingPage() {
+  const settings = useGameStore((state) => state.settings);
+  const startGame = useGameStore((state) => state.startGame);
 
-export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }: LandingPageProps) {
   const tiles = settings.copiesPerCategory.numbers * 27 + settings.copiesPerCategory.winds * 4 + settings.copiesPerCategory.dragons * 3;
   const shortDrawRemainder = tiles % settings.handSize;
   const recommendedHandSizes = Array.from({ length: 6 }, (_, index) => index + 4).filter((handSize) => tiles % handSize === 0);
@@ -32,35 +30,22 @@ export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }
               if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
               }
-              onStart(settings);
+              startGame(settings);
             }}
             type="button"
           >
             New Game
           </button>
         </div>
+
         <div className="hero__stats">
-          <div className="stat-card">
-            <span>Tiles</span>
-            <strong>{tiles}</strong>
-          </div>
-          <div className="stat-card">
-            <span>Hand size</span>
-            <strong>{settings.handSize}</strong>
-          </div>
-          <div className="stat-card">
-            <div className="stat-card__label">
-              Game overs
-              <span
-                className="input-help"
-                aria-hidden
-                title="A match ends when any honor tile reaches 0 or 10, or when the draw pile runs empty three times."
-              >
-                i
-              </span>
-            </div>
-            <strong>2 paths</strong>
-          </div>
+          <StatCard label="Tiles" value={tiles} />
+          <StatCard label="Hand size" value={settings.handSize} />
+          <StatCard
+            label="Game overs"
+            value="2 paths"
+            help={<span className="input-help" aria-hidden title="A match ends when any honor tile reaches 0 or 10, or when the draw pile runs empty three times.">i</span>}
+          />
           {shortDrawWarning ? (
             <div className="stat-card stat-card--warning">
               <span>Draw warning</span>
@@ -71,9 +56,7 @@ export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }
                   <span>Recommended hand sizes for {tiles} tiles</span>
                   <div className="stat-card__recommendation-list">
                     {recommendedHandSizes.map((handSize) => (
-                      <span key={handSize} className="stat-card__recommendation-pill">
-                        {handSize}
-                      </span>
+                      <span key={handSize} className="stat-card__recommendation-pill">{handSize}</span>
                     ))}
                   </div>
                 </div>
@@ -88,14 +71,13 @@ export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }
           ) : null}
         </div>
       </section>
+
       <section className="panel settings-panel">
-        <div className="panel__heading">
-          <p className="eyebrow">Settings</p>
-          <h2>Deck configuration</h2>
-        </div>
-        <SettingsPanel settings={settings} onChange={onSettingsChange} />
+        <SectionHeading eyebrow="Settings" title="Deck configuration" />
+        <SettingsPanel />
       </section>
-      <LeaderboardPanel entries={leaderboard} />
+
+      <LeaderboardPanel />
     </main>
   );
 }
