@@ -1,12 +1,17 @@
 import type { LeaderboardEntry } from '../game/types';
 import { LeaderboardPanel } from './LeaderboardPanel';
+import SettingsPanel from './SettingsPanel';
 
 interface LandingPageProps {
   leaderboard: LeaderboardEntry[];
-  onStart: () => void;
+  onStart: (settings: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } }) => void;
+  settings: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } };
+  onSettingsChange: (next: { handSize: number; copiesPerCategory: { numbers: number; winds: number; dragons: number } }) => void;
 }
 
-export function LandingPage({ leaderboard, onStart }: LandingPageProps) {
+export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }: LandingPageProps) {
+  const tiles = settings.copiesPerCategory.numbers * 27 + settings.copiesPerCategory.winds * 4 + settings.copiesPerCategory.dragons * 3;
+
   return (
     <main className="landing-shell">
       <section className="hero panel">
@@ -16,22 +21,29 @@ export function LandingPage({ leaderboard, onStart }: LandingPageProps) {
           <p className="hero__lede">
             A future-friendly tile game with dynamic tile values, deck reshuffles, local highscores, and a polished split between domain logic and presentation.
           </p>
-          <button className="primary-button" onClick={onStart} type="button">New Game</button>
+          <button className="primary-button" onClick={() => onStart(settings)} type="button">New Game</button>
         </div>
         <div className="hero__stats">
           <div className="stat-card">
             <span>Tiles</span>
-            <strong>136</strong>
+            <strong>{tiles}</strong>
           </div>
           <div className="stat-card">
             <span>Hand size</span>
-            <strong>4</strong>
+            <strong>{settings.handSize}</strong>
           </div>
           <div className="stat-card">
             <span>Game overs</span>
             <strong>2 paths</strong>
           </div>
         </div>
+      </section>
+      <section className="panel settings-panel">
+        <div className="panel__heading">
+          <p className="eyebrow">Settings</p>
+          <h2>Deck configuration</h2>
+        </div>
+        <SettingsPanel settings={settings} onChange={onSettingsChange} />
       </section>
       <LeaderboardPanel entries={leaderboard} />
     </main>

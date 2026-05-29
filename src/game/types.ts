@@ -44,6 +44,14 @@ export interface GameState {
   readonly exhaustionCount: number;
   readonly lastOutcome: RoundOutcome | null;
   readonly leaderboard: LeaderboardEntry[];
+  readonly settings?: {
+    readonly handSize: number;
+    readonly copiesPerCategory: {
+      readonly numbers: number;
+      readonly winds: number;
+      readonly dragons: number;
+    };
+  };
 }
 
 export interface RoundResult {

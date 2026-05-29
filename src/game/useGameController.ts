@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useReducer } from 'react';
-import { buildInitialDeck, createInitialHand, loadLeaderboard, resolveRound, saveLeaderboard, seedLeaderboard, shuffleTiles } from './engine';
+import { createInitialHand, loadLeaderboard, resolveRound, saveLeaderboard, seedLeaderboard, shuffleTiles, createFreshDeck } from './engine';
 import { BetChoice, GameState } from './types';
 
 interface Action {
   type: 'start' | 'bet' | 'exit' | 'restart' | 'return-home' | 'load-leaderboard';
   choice?: BetChoice;
+  settings?: { handSize: number; copiesPerCategory?: { numbers: number; winds: number; dragons: number } };
 }
 
 function createInitialState(): GameState {
@@ -30,8 +31,10 @@ function reducer(state: GameState, action: Action): GameState {
         leaderboard: seedLeaderboard(loadLeaderboard()),
       };
     case 'start': {
-      const drawPile = buildInitialDeck();
-      const { hand, remainingPile } = createInitialHand(drawPile);
+      const handSize = action.settings?.handSize ?? 4;
+      const copiesConfig = action.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 };
+      const fullDeck = createFreshDeck(copiesConfig as any);
+      const { hand, remainingPile } = createInitialHand(fullDeck, handSize);
       return {
         ...state,
         status: 'game',
@@ -44,6 +47,7 @@ function reducer(state: GameState, action: Action): GameState {
         exhaustionCount: 0,
         lastOutcome: null,
         leaderboard: seedLeaderboard(loadLeaderboard()),
+        settings: { handSize, copiesPerCategory: typeof copiesConfig === 'object' ? copiesConfig as { numbers: number; winds: number; dragons: number } : { numbers: copiesConfig as number, winds: copiesConfig as number, dragons: copiesConfig as number } },
       };
     }
     case 'bet': {
@@ -51,9 +55,10 @@ function reducer(state: GameState, action: Action): GameState {
         return state;
       }
 
+      const copiesConfig = state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 };
       const reshuffledDrawPile = state.drawPile.length > 0
         ? state.drawPile
-        : shuffleTiles([...buildInitialDeck(), ...state.discardPile]);
+        : shuffleTiles([...createFreshDeck(copiesConfig as any), ...state.discardPile]);
 
       const round = resolveRound({
         currentHand: state.currentHand,
@@ -91,8 +96,10 @@ function reducer(state: GameState, action: Action): GameState {
         status: 'landing',
       };
     case 'restart': {
-      const drawPile = buildInitialDeck();
-      const { hand, remainingPile } = createInitialHand(drawPile);
+      const handSize = state.settings?.handSize ?? 4;
+      const copiesConfig = state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 };
+      const fullDeck = createFreshDeck(copiesConfig as any);
+      const { hand, remainingPile } = createInitialHand(fullDeck, handSize);
       return {
         ...state,
         status: 'game',
@@ -119,7 +126,7 @@ export function useGameController() {
   }, []);
 
   const actions = useMemo(() => ({
-    startGame: () => dispatch({ type: 'start' }),
+    startGame: (settings?: { handSize: number; copiesPerCategory?: { numbers: number; winds: number; dragons: number } }) => dispatch({ type: 'start', settings }),
     betHigher: () => dispatch({ type: 'bet', choice: 'higher' }),
     betLower: () => dispatch({ type: 'bet', choice: 'lower' }),
     exitGame: () => dispatch({ type: 'exit' }),

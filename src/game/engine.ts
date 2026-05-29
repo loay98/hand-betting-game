@@ -8,7 +8,6 @@ import {
   TileDefinition,
 } from './types';
 
-const HAND_SIZE = 4;
 const LEADERBOARD_KEY = 'hand-betting-game.leaderboard';
 const MAX_LEADERBOARD_ENTRIES = 5;
 
@@ -31,26 +30,45 @@ const DRAGON_TILES: Array<{ label: string; symbol: string }> = [
   { label: 'White Dragon', symbol: '白' },
 ];
 
-const COPIES_PER_TILE = 4;
+// defaults
+const DEFAULT_HAND_SIZE = 4;
+const DEFAULT_COPIES_PER_TILE = 4;
 
-export function createFreshDeck(): Tile[] {
+export type CopiesConfig =
+  | number
+  | {
+      numbers: number;
+      winds: number;
+      dragons: number;
+    };
+
+function copiesFor<T extends CopiesConfig>(config: CopiesConfig, kind: 'numbers' | 'winds' | 'dragons') {
+  if (typeof config === 'number') return config;
+  return config[kind];
+}
+
+export function createFreshDeck(copiesPerTile: CopiesConfig = DEFAULT_COPIES_PER_TILE): Tile[] {
   const deck: Tile[] = [];
+  const numberCopies = copiesFor(copiesPerTile, 'numbers');
+  const windCopies = copiesFor(copiesPerTile, 'winds');
+  const dragonCopies = copiesFor(copiesPerTile, 'dragons');
+
   for (let faceValue = 1; faceValue <= 9; faceValue += 1) {
     for (const suit of NUMBER_SUITS) {
-      for (let copy = 0; copy < COPIES_PER_TILE; copy += 1) {
+      for (let copy = 0; copy < numberCopies; copy += 1) {
         deck.push(createTile({ kind: 'number', label: `${faceValue} of ${suit.suit}`, faceValue, symbol: `${faceValue}${suit.symbol}` }));
       }
     }
   }
 
   for (const wind of WIND_TILES) {
-    for (let copy = 0; copy < COPIES_PER_TILE; copy += 1) {
+    for (let copy = 0; copy < windCopies; copy += 1) {
       deck.push(createTile({ kind: 'wind', label: wind.label, faceValue: 5, symbol: wind.symbol }));
     }
   }
 
   for (const dragon of DRAGON_TILES) {
-    for (let copy = 0; copy < COPIES_PER_TILE; copy += 1) {
+    for (let copy = 0; copy < dragonCopies; copy += 1) {
       deck.push(createTile({ kind: 'dragon', label: dragon.label, faceValue: 5, symbol: dragon.symbol }));
     }
   }
@@ -58,7 +76,7 @@ export function createFreshDeck(): Tile[] {
   return shuffleTiles(deck);
 }
 
-export function drawHand(drawPile: Tile[], handSize = HAND_SIZE): { hand: Tile[]; remainingPile: Tile[] } {
+export function drawHand(drawPile: Tile[], handSize = DEFAULT_HAND_SIZE): { hand: Tile[]; remainingPile: Tile[] } {
   const hand = drawPile.slice(0, handSize).map((tile) => ({ ...tile }));
   const remainingPile = drawPile.slice(handSize);
   return { hand, remainingPile };
@@ -131,7 +149,7 @@ export function resolveRound(params: {
   currentScore: number;
 }): RoundResult {
   const previousTotal = params.currentHand.total;
-  const { hand: rawNextHand, remainingPile } = drawHand(params.nextDrawPile);
+  const { hand: rawNextHand, remainingPile } = drawHand(params.nextDrawPile, params.currentHand.tiles.length);
   const nextTotalBeforeResolve = calculateHandTotal(rawNextHand);
   const isCorrect = evaluateBet(params.choice, previousTotal, nextTotalBeforeResolve);
   const outcome: RoundOutcome = isCorrect ? 'win' : 'loss';
@@ -164,8 +182,8 @@ export function resolveRound(params: {
   };
 }
 
-export function createInitialHand(drawPile: Tile[]): { hand: HandRecord; remainingPile: Tile[] } {
-  const { hand, remainingPile } = drawHand(drawPile);
+export function createInitialHand(drawPile: Tile[], handSize?: number): { hand: HandRecord; remainingPile: Tile[] } {
+  const { hand, remainingPile } = drawHand(drawPile, handSize ?? DEFAULT_HAND_SIZE);
   return {
     hand: createHandRecord({ hand, roundNumber: 1, bet: null, outcome: null, roundPoints: 0 }),
     remainingPile,
