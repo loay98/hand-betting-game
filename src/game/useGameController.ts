@@ -163,7 +163,16 @@ function reducer(state: GameState, action: Action): GameState {
 
       const history = [{ prev: resolvedPrevHand, next: round.nextHand, honorValuesAfter: nextHonorValues }, ...state.history];
       const nextLeaderboard = round.isGameOver
-        ? saveLeaderboard(state.leaderboard, round.updatedScore, round.nextRound)
+        ? saveLeaderboard(
+            state.leaderboard,
+            round.updatedScore,
+            round.nextRound,
+            createFreshDeck(buildCopyConfig(state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 }) as any).length,
+            state.settings?.handSize ?? state.currentHand.tiles.length,
+            round.updatedExhaustionCount,
+            nextHonorValues,
+            round.reason,
+          )
         : state.leaderboard;
 
       const playedState: GameState = {

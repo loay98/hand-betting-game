@@ -31,6 +31,11 @@ export interface LeaderboardEntry {
   readonly score: number;
   readonly rounds: number;
   readonly createdAt: string;
+  readonly totalTiles: number;
+  readonly handSize: number;
+  readonly reshuffles: number;
+  readonly honorValues?: Record<string, number>;
+  readonly endedBy?: 'tileLimit' | 'deckLimit';
 }
 
 export interface RoundHistoryEntry {

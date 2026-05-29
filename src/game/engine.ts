@@ -255,12 +255,26 @@ export function loadLeaderboard(): LeaderboardEntry[] {
   }
 }
 
-export function saveLeaderboard(existing: LeaderboardEntry[], score: number, rounds: number): LeaderboardEntry[] {
+export function saveLeaderboard(
+  existing: LeaderboardEntry[],
+  score: number,
+  rounds: number,
+  totalTiles: number,
+  handSize: number,
+  reshuffles: number,
+  honorValues: HonorValueMap,
+  endedBy?: 'tileLimit' | 'deckLimit',
+): LeaderboardEntry[] {
   const updated = [...existing, {
     id: crypto.randomUUID(),
     score,
     rounds,
     createdAt: new Date().toISOString(),
+    totalTiles,
+    handSize,
+    reshuffles,
+    honorValues,
+    endedBy,
   }]
     .sort((left, right) => right.score - left.score || right.rounds - left.rounds)
     .slice(0, MAX_LEADERBOARD_ENTRIES);

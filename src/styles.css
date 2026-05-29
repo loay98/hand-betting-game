@@ -645,6 +645,95 @@ input[aria-invalid="true"] {
   color: var(--muted);
 }
 
+.leaderboard-list__body {
+  display: grid;
+  gap: 10px;
+}
+
+.leaderboard-list__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.leaderboard-list__details {
+  display: grid;
+  gap: 4px;
+}
+
+.leaderboard-list__ending {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.leaderboard-list__detail {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.leaderboard-list__honors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.leaderboard-list__honor {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.74rem;
+  color: var(--text);
+}
+
+.leaderboard-list__honor--wind {
+  background: linear-gradient(180deg, rgba(75, 163, 255, 0.22), rgba(75, 163, 255, 0.1));
+  border-color: rgba(75, 163, 255, 0.28);
+}
+
+.leaderboard-list__honor--dragon {
+  background: linear-gradient(180deg, rgba(255, 90, 90, 0.22), rgba(255, 90, 90, 0.1));
+  border-color: rgba(255, 90, 90, 0.28);
+}
+
+.leaderboard-list__honor-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.leaderboard-list__honor-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.leaderboard-list__honor-delta {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.leaderboard-list__honor-delta--up {
+  color: #ffffff;
+}
+
+.leaderboard-list__honor-delta--down {
+  color: #ffffff;
+}
+
+.leaderboard-list__honor-delta--neutral {
+  color: var(--muted);
+}
+
 .panel__empty {
   color: var(--muted);
   padding: 10px 0;
