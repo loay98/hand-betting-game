@@ -14,7 +14,9 @@ export function GameOverScreen({ state, onRestart, onReturnHome }: GameOverScree
     : null;
   const endTip = state.exhaustionCount >= 3
     ? 'This run ended because the draw pile ran empty three times.'
-    : 'This run ended because a tile value hit the limit.';
+    : limitTileText
+      ? `This run ended because a tile value hit the limit. The tile${limitTiles.length > 1 ? 's that hit the limit were' : ' that hit the limit was'} ${limitTileText}.`
+      : 'This run ended because a tile value hit the limit.';
 
   return (
     <main className="game-over-shell">
@@ -22,13 +24,8 @@ export function GameOverScreen({ state, onRestart, onReturnHome }: GameOverScree
         <p className="eyebrow">Game over</p>
         <h1>Final score {state.score}</h1>
         <p>
-          You survived {state.round - 1} rounds. The match ended because {state.exhaustionCount >= 3 ? 'the draw pile ran out for the third time' : 'a tile value hit the limit'}.
+          You survived {state.round - 1} rounds.
         </p>
-        {limitTileText && (
-          <p>
-            The tile{limitTiles.length > 1 ? 's that hit the limit were' : ' that hit the limit was'} {limitTileText}.
-          </p>
-        )}
         <div className="game-over-tip" role="note">
           <strong>How the game ends:</strong>
           <span>{endTip}</span>
