@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer } from 'react';
-import { applyHonorValuesToHand, createFreshDeck, createHandRecord, createInitialHand, createInitialHonorValues, loadLeaderboard, resolveRound, saveLeaderboard, seedLeaderboard, shuffleTiles, updateHonorValuesForOutcome } from './engine';
+import { applyHonorValuesToHand, calculateHonorValuesTotal, createFreshDeck, createHandRecord, createInitialHand, createInitialHonorValues, loadLeaderboard, resolveRound, saveLeaderboard, seedLeaderboard, shuffleTiles, updateHonorValuesForOutcome } from './engine';
 import { BetChoice, GameState, RoundHistoryEntry, HandRecord } from './types';
 
 interface Action {
@@ -171,6 +171,7 @@ function reducer(state: GameState, action: Action): GameState {
         currentScore: state.score,
       });
 
+      const nextRoundPoints = round.outcome === 'win' ? calculateHonorValuesTotal(state.honorValues) : 0;
       const nextHonorValues = updateHonorValuesForOutcome(state.honorValues, state.currentHand.tiles, round.outcome);
       const shouldReshuffleNow = !round.isGameOver && round.updatedDrawPile.length === 0;
       const nextDrawPile = shouldReshuffleNow
@@ -182,28 +183,33 @@ function reducer(state: GameState, action: Action): GameState {
       // - record it in history with `skipped: true`
       // - don't award points
       // - clear the bet/outcome on the recorded hands
+      const resolvedNextHand: HandRecord = {
+        ...round.nextHand,
+        roundPoints: nextRoundPoints,
+      };
+
       let nextActiveHand = createHandRecord({
-        hand: applyHonorValuesToHand(round.nextHand.tiles, nextHonorValues),
-        roundNumber: round.nextHand.roundNumber,
-        bet: round.nextHand.bet,
-        outcome: round.nextHand.outcome,
-        roundPoints: round.nextHand.roundPoints,
-        comparedTo: round.nextHand.comparedTo,
+        hand: applyHonorValuesToHand(resolvedNextHand.tiles, nextHonorValues),
+        roundNumber: resolvedNextHand.roundNumber,
+        bet: resolvedNextHand.bet,
+        outcome: resolvedNextHand.outcome,
+        roundPoints: nextRoundPoints,
+        comparedTo: resolvedNextHand.comparedTo,
       });
 
       let resolvedPrevHand: HandRecord = {
         ...state.currentHand,
         outcome: round.outcome,
-        roundPoints: round.nextHand.roundPoints,
-        comparedTo: round.nextHand.comparedTo,
+        roundPoints: nextRoundPoints,
+        comparedTo: resolvedNextHand.comparedTo,
       };
 
-      let historyEntry = { prev: resolvedPrevHand, next: round.nextHand, honorValuesAfter: nextHonorValues } as any;
+      let historyEntry = { prev: resolvedPrevHand, next: resolvedNextHand, honorValuesAfter: nextHonorValues } as any;
 
       if (round.outcome === 'push') {
         // mark both hands as having no bet/outcome and zero points
-        const clearedPrev = { ...state.currentHand, outcome: null, roundPoints: 0, bet: null, comparedTo: round.nextHand.comparedTo };
-        const clearedNext = { ...round.nextHand, outcome: null, roundPoints: 0, bet: null };
+        const clearedPrev = { ...state.currentHand, outcome: null, roundPoints: 0, bet: null, comparedTo: resolvedNextHand.comparedTo };
+        const clearedNext = { ...resolvedNextHand, outcome: null, roundPoints: 0, bet: null };
 
         resolvedPrevHand = clearedPrev;
         nextActiveHand = createHandRecord({
@@ -219,10 +225,11 @@ function reducer(state: GameState, action: Action): GameState {
       }
 
       const history = [historyEntry, ...state.history];
+      const nextScore = state.score + nextRoundPoints;
       const nextLeaderboard = round.isGameOver
         ? saveLeaderboard(
             state.leaderboard,
-            round.updatedScore,
+        nextScore,
             round.nextRound,
             createFreshDeck(buildCopyConfig(state.settings?.copiesPerCategory ?? { numbers: 4, winds: 4, dragons: 4 }) as any).length,
             state.settings?.handSize ?? state.currentHand.tiles.length,
@@ -235,7 +242,7 @@ function reducer(state: GameState, action: Action): GameState {
       const playedState: GameState = {
         ...state,
         status: round.isGameOver ? 'gameOver' : 'game',
-        score: round.updatedScore,
+        score: nextScore,
         round: round.nextRound,
         drawPile: nextDrawPile,
         discardPile: nextDiscardPile,

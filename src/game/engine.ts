@@ -130,6 +130,14 @@ export function calculateHandTotal(tiles: Tile[]): number {
   return tiles.reduce((sum, tile) => sum + tile.value, 0);
 }
 
+export function calculateHonorTileTotal(tiles: Tile[]): number {
+  return tiles.reduce((sum, tile) => sum + (tile.kind === 'number' ? 0 : tile.value), 0);
+}
+
+export function calculateHonorValuesTotal(honorValues: HonorValueMap): number {
+  return Object.values(honorValues).reduce((sum, value) => sum + value, 0);
+}
+
 export function compareHands(previousTotal: number, nextTotal: number): 'higher' | 'lower' | 'equal' {
   if (nextTotal > previousTotal) {
     return 'higher';
@@ -198,8 +206,7 @@ export function resolveRound(params: {
   const isCorrect = evaluateBet(params.choice, previousTotal, nextTotalBeforeResolve);
   const outcome: RoundOutcome = isCorrect ? 'win' : 'loss';
   const adjustedCurrentHand = applyOutcomeToHand(params.currentHand.tiles, outcome);
-  const nextHandTotal = nextTotalBeforeResolve;
-  const roundPoints = isCorrect ? Math.max(10, 24 - Math.abs(nextHandTotal - previousTotal)) : 0;
+  const roundPoints = isCorrect ? calculateHonorTileTotal(rawNextHand) : 0;
   const updatedDiscardPile = [...params.discardPile, ...adjustedCurrentHand.map((tile) => ({ ...tile }))];
   const nextHand = createHandRecord({
     hand: rawNextHand,
@@ -217,7 +224,7 @@ export function resolveRound(params: {
     nextHand,
     updatedDrawPile: remainingPile,
     updatedDiscardPile,
-    updatedScore: params.currentScore + (isCorrect ? roundPoints : 0),
+    updatedScore: params.currentScore + roundPoints,
     updatedExhaustionCount: nextExhaustionCount,
     nextRound: params.round + 1,
     outcome,
