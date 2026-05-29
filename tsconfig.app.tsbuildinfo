@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/gameoverscreen.tsx","./src/components/gameview.tsx","./src/components/handpreview.tsx","./src/components/landingpage.tsx","./src/components/leaderboardpanel.tsx","./src/components/tilecard.tsx","./src/game/engine.ts","./src/game/types.ts","./src/game/usegamecontroller.ts"],"version":"5.9.3"}
