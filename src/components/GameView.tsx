@@ -1,4 +1,5 @@
-import { HandPreview } from './HandPreview';
+      import { HandPreview } from './HandPreview';
+      import { SPECIAL_TILE_DEFINITIONS } from '../game/engine';
 import type { GameState } from '../game/types';
 
 interface GameViewProps {
@@ -15,18 +16,47 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
     return null;
   }
 
+  const activeSpecialValues = new Map(
+    currentHand.tiles
+      .filter((tile) => tile.kind !== 'number')
+      .map((tile) => [`${tile.kind}:${tile.label}`, tile.value]),
+  );
+
   return (
     <main className="game-shell">
       <header className="game-topbar panel">
-        <div>
-          <p className="eyebrow">Round {state.round}</p>
-          <h1>Current hand: {currentHand.total}</h1>
+        <div className="game-topbar__round">
+          <p className="game-topbar__round-label">Round {state.round}</p>
         </div>
-        <div className="game-topbar__stats">
-          <span>Score {state.score}</span>
-          <span>Draw {state.drawPile.length}</span>
-          <span>Discard {state.discardPile.length}</span>
-          <span>Runs {state.exhaustionCount}/3</span>
+        <div className="game-topbar__meta">
+          <div className="game-topbar__specials">
+            <span className="game-topbar__specials-label">Special values</span>
+            <div className="game-topbar__specials-list">
+              {SPECIAL_TILE_DEFINITIONS.map((tile) => {
+                const value = activeSpecialValues.get(`${tile.kind}:${tile.label}`) ?? tile.faceValue;
+
+                return (
+                  <span
+                    key={`${tile.kind}:${tile.label}`}
+                    className={`game-topbar__specials-item game-topbar__specials-item--${tile.kind}`}
+                    aria-label={`${tile.label} ${value}`}
+                    title={`${tile.label} ${value}`}
+                  >
+                    <span className="game-topbar__specials-icon" aria-hidden="true">
+                      {tile.symbol}
+                    </span>
+                    <span className="game-topbar__specials-value">{value}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+          <div className="game-topbar__stats">
+            <span>Score {state.score}</span>
+            <span>Draw {state.drawPile.length}</span>
+            <span>Discard {state.discardPile.length}</span>
+            <span>Runs {state.exhaustionCount}/3</span>
+          </div>
         </div>
         <button className="ghost-button" type="button" onClick={onExit}>Exit to landing</button>
       </header>
@@ -43,8 +73,18 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
             <button className="primary-button" type="button" onClick={onBetLower}>Bet Lower</button>
           </div>
           <div className="rules-card">
-            <strong>Tile rules</strong>
-            <p>Number tiles keep face value. Winds and dragons start at 5 and drift by 1 after each win or loss.</p>
+            <p className="eyebrow">Tile rules</p>
+            <p>Number tiles keep face value.</p>
+            <div className="rules-card__powers">
+              <div>
+                <strong>Winds</strong>
+                <span>East, South, West, and North all start at 5 and shift by 1 after each win or loss.</span>
+              </div>
+              <div>
+                <strong>Dragons</strong>
+                <span>Red, Green, and White all start at 5 and shift by 1 after each win or loss.</span>
+              </div>
+            </div>
           </div>
         </section>
       </section>

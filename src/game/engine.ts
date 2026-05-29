@@ -30,6 +30,11 @@ const DRAGON_TILES: Array<{ label: string; symbol: string }> = [
   { label: 'White Dragon', symbol: '白' },
 ];
 
+export const SPECIAL_TILE_DEFINITIONS: TileDefinition[] = [
+  ...WIND_TILES.map((tile) => ({ kind: 'wind' as const, label: tile.label, faceValue: 5, symbol: tile.symbol })),
+  ...DRAGON_TILES.map((tile) => ({ kind: 'dragon' as const, label: tile.label, faceValue: 5, symbol: tile.symbol })),
+];
+
 // defaults
 const DEFAULT_HAND_SIZE = 4;
 const DEFAULT_COPIES_PER_TILE = 4;
