@@ -47,6 +47,8 @@ export type CopiesConfig =
       dragons: number;
     };
 
+export type HonorValueMap = Record<string, number>;
+
 function copiesFor<T extends CopiesConfig>(config: CopiesConfig, kind: 'numbers' | 'winds' | 'dragons') {
   if (typeof config === 'number') return config;
   return config[kind];
@@ -79,6 +81,43 @@ export function createFreshDeck(copiesPerTile: CopiesConfig = DEFAULT_COPIES_PER
   }
 
   return shuffleTiles(deck);
+}
+
+export function createInitialHonorValues(): HonorValueMap {
+  return HONOR_TILE_DEFINITIONS.reduce<HonorValueMap>((values, tile) => {
+    values[`${tile.kind}:${tile.label}`] = tile.faceValue;
+    return values;
+  }, {});
+}
+
+export function applyHonorValuesToHand(hand: Tile[], honorValues: HonorValueMap): Tile[] {
+  return hand.map((tile) => {
+    if (tile.kind === 'number') {
+      return tile;
+    }
+
+    const key = `${tile.kind}:${tile.label}`;
+    return {
+      ...tile,
+      value: honorValues[key] ?? tile.faceValue,
+    };
+  });
+}
+
+export function updateHonorValuesForOutcome(honorValues: HonorValueMap, hand: Tile[], outcome: RoundOutcome): HonorValueMap {
+  const nextHonorValues = { ...honorValues };
+
+  for (const tile of hand) {
+    if (tile.kind === 'number') {
+      continue;
+    }
+
+    const key = `${tile.kind}:${tile.label}`;
+    const currentValue = nextHonorValues[key] ?? tile.faceValue;
+    nextHonorValues[key] = outcome === 'win' ? currentValue + 1 : outcome === 'loss' ? currentValue - 1 : currentValue;
+  }
+
+  return nextHonorValues;
 }
 
 export function drawHand(drawPile: Tile[], handSize = DEFAULT_HAND_SIZE): { hand: Tile[]; remainingPile: Tile[] } {
@@ -158,19 +197,19 @@ export function resolveRound(params: {
   const nextTotalBeforeResolve = calculateHandTotal(rawNextHand);
   const isCorrect = evaluateBet(params.choice, previousTotal, nextTotalBeforeResolve);
   const outcome: RoundOutcome = isCorrect ? 'win' : 'loss';
-  const adjustedHand = applyOutcomeToHand(rawNextHand, outcome);
-  const nextHandTotal = calculateHandTotal(adjustedHand);
+  const adjustedCurrentHand = applyOutcomeToHand(params.currentHand.tiles, outcome);
+  const nextHandTotal = nextTotalBeforeResolve;
   const roundPoints = isCorrect ? Math.max(10, 24 - Math.abs(nextHandTotal - previousTotal)) : 0;
-  const updatedDiscardPile = [...params.discardPile, ...params.currentHand.tiles.map((tile) => ({ ...tile }))];
+  const updatedDiscardPile = [...params.discardPile, ...adjustedCurrentHand.map((tile) => ({ ...tile }))];
   const nextHand = createHandRecord({
-    hand: adjustedHand,
+    hand: rawNextHand,
     roundNumber: params.round + 1,
     bet: params.choice,
     outcome,
     roundPoints,
     comparedTo: previousTotal,
   });
-  const tileLimitReached = hasTileLimitBeenReached(adjustedHand);
+  const tileLimitReached = hasTileLimitBeenReached(adjustedCurrentHand);
   const nextExhaustionCount = remainingPile.length === 0 ? params.exhaustionCount + 1 : params.exhaustionCount;
   const deckLimitReached = nextExhaustionCount >= 3;
 

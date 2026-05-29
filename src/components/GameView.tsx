@@ -16,11 +16,45 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
     return null;
   }
 
-  const renderHonorValues = (tiles: typeof currentHand.tiles, tone: 'topbar' | 'history' = 'topbar') => {
-    const honorValues = new Map(
-      tiles
-        .filter((tile) => tile.kind !== 'number')
-        .map((tile) => [`${tile.kind}:${tile.label}`, tile.value]),
+  const renderHonorValues = (honorValues: Record<string, number>, tone: 'topbar' | 'history' = 'topbar') => {
+    return (
+      <div className={`game-topbar__honors ${tone === 'history' ? 'history-pair__honors' : ''}`}>
+        <span className="game-topbar__honors-label">Honor values</span>
+        <div className="game-topbar__honors-list">
+          {HONOR_TILE_DEFINITIONS.map((tile) => {
+            const key = `${tile.kind}:${tile.label}`;
+            const value = honorValues[key] ?? tile.faceValue;
+            const delta = value - tile.faceValue;
+            const deltaClass = delta > 0 ? 'up' : delta < 0 ? 'down' : 'neutral';
+            const deltaLabel = delta > 0 ? `+${delta}` : `${delta}`;
+
+            return (
+              <span
+                key={`${tile.kind}:${tile.label}`}
+                className={`game-topbar__honors-item game-topbar__honors-item--${tile.kind}`}
+                aria-label={`${tile.label} ${value}${delta !== 0 ? ` (${deltaLabel})` : ''}`}
+                title={`${tile.label} ${value}${delta !== 0 ? ` (${deltaLabel})` : ''}`}
+              >
+                <span className="game-topbar__honors-icon" aria-hidden="true">
+                  {tile.symbol}
+                </span>
+                <span className="game-topbar__honors-value">{value}</span>
+                <span className={`history-pair__honors-delta history-pair__honors-delta--${deltaClass}`}>{delta === 0 ? '—' : deltaLabel}</span>
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderHistoryHonorValues = (
+    tiles: typeof currentHand.tiles,
+    honorValuesAfter: Record<string, number>,
+    tone: 'history' | 'topbar' = 'history',
+  ) => {
+    const prevMap = new Map(
+      tiles.filter((tile) => tile.kind !== 'number').map((tile) => [`${tile.kind}:${tile.label}`, tile.value]),
     );
 
     return (
@@ -28,19 +62,26 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
         <span className="game-topbar__honors-label">Honor values</span>
         <div className="game-topbar__honors-list">
           {HONOR_TILE_DEFINITIONS.map((tile) => {
-            const value = honorValues.get(`${tile.kind}:${tile.label}`) ?? tile.faceValue;
+            const key = `${tile.kind}:${tile.label}`;
+            const prevValue = prevMap.get(key) ?? tile.faceValue;
+            const nextValue = honorValuesAfter[key] ?? prevValue;
+            const delta = nextValue - prevValue;
+            const affected = prevMap.has(key) && delta !== 0;
+            const deltaClass = affected ? (delta > 0 ? 'up' : 'down') : 'neutral';
+            const deltaLabel = affected ? (delta > 0 ? `+${delta}` : `${delta}`) : '—';
 
             return (
               <span
-                key={`${tile.kind}:${tile.label}`}
+                key={key}
                 className={`game-topbar__honors-item game-topbar__honors-item--${tile.kind}`}
-                aria-label={`${tile.label} ${value}`}
-                title={`${tile.label} ${value}`}
+                aria-label={`${tile.label} ${nextValue} (${deltaLabel})`}
+                title={`${tile.label} ${nextValue} (${deltaLabel})`}
               >
                 <span className="game-topbar__honors-icon" aria-hidden="true">
                   {tile.symbol}
                 </span>
-                <span className="game-topbar__honors-value">{value}</span>
+                <span className="game-topbar__honors-value">{nextValue}</span>
+                <span className={`history-pair__honors-delta history-pair__honors-delta--${deltaClass}`}>{deltaLabel}</span>
               </span>
             );
           })}
@@ -56,7 +97,7 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
           <p className="game-topbar__round-label">Round {currentHand.roundNumber}</p>
         </div>
         <div className="game-topbar__meta">
-          {renderHonorValues(currentHand.tiles)}
+          {renderHonorValues(state.honorValues)}
           <div className="game-topbar__stats">
             <span>Score {state.score}</span>
             <span>Draw {state.drawPile.length}</span>
@@ -108,26 +149,29 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
             {state.history.map((entry) => (
               <div key={entry.prev.id} className="history-pair">
                 <div className="history-pair__card panel">
-                  {(() => {
-                    const bet = entry.next.bet ?? null;
-                    const outcome = entry.prev.outcome ?? null;
-                    const pts = entry.prev.roundPoints ?? 0;
-
-                    return (
-                      <div className="history-pair__header">
-                        <p className="eyebrow">Round {entry.prev.roundNumber}</p>
-                        <div className="history-pair__meta">
-                          <span className="history-pair__chip">Bet: {bet ?? '—'}</span>
-                          <span className={`history-pair__chip ${outcome ? `history-pair__chip--${outcome}` : ''}`}>Outcome: {outcome ?? '—'}</span>
-                          <span className="history-pair__chip">Pts: {pts}</span>
-                        </div>
+                  {entry.skipped ? (
+                    <div className="history-pair__header">
+                      <p className="eyebrow">Skipped round {entry.prev.roundNumber}</p>
+                      <div className="history-pair__meta">
+                        <span className="history-pair__chip history-pair__chip--skip">Auto skip</span>
+                        <span className="history-pair__chip">Not enough tiles</span>
+                        <span className="history-pair__chip">Reshuffled</span>
                       </div>
-                    );
-                  })()}
-                  {renderHonorValues(entry.prev.tiles, 'history')}
-                  <div className="history-pair__content">
-                    <HandPreview hand={entry.prev} title="Starting hand" tone="history" />
-                    <HandPreview hand={entry.next} title="Resulting hand" tone="history" />
+                    </div>
+                  ) : (
+                    <div className="history-pair__header">
+                      <p className="eyebrow">Round {entry.prev.roundNumber}</p>
+                      <div className="history-pair__meta">
+                        <span className="history-pair__chip">Bet: {entry.next.bet ?? '—'}</span>
+                        <span className={`history-pair__chip ${entry.prev.outcome ? `history-pair__chip--${entry.prev.outcome}` : ''}`}>Outcome: {entry.prev.outcome ?? '—'}</span>
+                        <span className="history-pair__chip">Pts: {entry.prev.roundPoints ?? 0}</span>
+                      </div>
+                    </div>
+                  )}
+                  {renderHistoryHonorValues(entry.prev.tiles, entry.honorValuesAfter, 'history')}
+                  <div className={`history-pair__content ${entry.skipped ? 'history-pair__content--single' : ''}`}>
+                    <HandPreview hand={entry.prev} title={entry.skipped ? 'Current hand' : 'Starting hand'} tone="history" />
+                    {!entry.skipped ? <HandPreview hand={entry.next} title="Resulting hand" tone="history" /> : null}
                   </div>
                 </div>
               </div>

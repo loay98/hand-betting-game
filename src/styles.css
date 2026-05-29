@@ -108,6 +108,53 @@ h1, h2, p {
   font-size: 0.9rem;
 }
 
+.stat-card--warning {
+  border-color: rgba(255, 191, 71, 0.28);
+  background: linear-gradient(180deg, rgba(255, 191, 71, 0.12), rgba(255, 138, 61, 0.08));
+}
+
+.stat-card--warning p {
+  margin-top: 8px;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.stat-card__recommendations {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-card__recommendations > span {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.stat-card__recommendation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stat-card__recommendation-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 191, 71, 0.18);
+  border: 1px solid rgba(255, 191, 71, 0.28);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.stat-card__recommendations strong {
+  color: var(--text);
+}
+
 .stat-card__label {
   display: flex;
   align-items: center;
@@ -187,12 +234,14 @@ h1, h2, p {
   color: var(--muted);
 }
 
+.game-topbar__specials,
 .game-topbar__honors {
   display: grid;
   gap: 4px;
   color: var(--muted);
 }
 
+.game-topbar__specials-label,
 .game-topbar__honors-label {
   font-size: 0.8rem;
   letter-spacing: 0.08em;
@@ -200,13 +249,16 @@ h1, h2, p {
   color: var(--accent);
 }
 
+.game-topbar__specials-list,
 .game-topbar__honors-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
+.game-topbar__specials-item,
 .game-topbar__honors-item,
+.game-topbar__specials-empty,
 .game-topbar__honors-empty {
   display: inline-flex;
   align-items: center;
@@ -218,6 +270,7 @@ h1, h2, p {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.game-topbar__specials-item,
 .game-topbar__honors-item {
   font-size: 0.78rem;
   line-height: 1;
@@ -225,16 +278,19 @@ h1, h2, p {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
 }
 
+.game-topbar__specials-item--wind,
 .game-topbar__honors-item--wind {
   background: linear-gradient(180deg, rgba(75, 163, 255, 0.28), rgba(75, 163, 255, 0.12));
   border-color: rgba(75, 163, 255, 0.35);
 }
 
+.game-topbar__specials-item--dragon,
 .game-topbar__honors-item--dragon {
   background: linear-gradient(180deg, rgba(255, 90, 90, 0.28), rgba(255, 90, 90, 0.12));
   border-color: rgba(255, 90, 90, 0.35);
 }
 
+.game-topbar__specials-icon,
 .game-topbar__honors-icon {
   display: inline-flex;
   align-items: center;
@@ -247,6 +303,7 @@ h1, h2, p {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.game-topbar__specials-value,
 .game-topbar__honors-value {
   min-width: 1ch;
   font-variant-numeric: tabular-nums;
@@ -354,6 +411,21 @@ h1, h2, p {
 .toast {
   right: 28px;
   top: 28px;
+}
+
+.toast-stack {
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  display: grid;
+  gap: 8px;
+  z-index: 1200;
+  max-width: min(420px, calc(100vw - 56px));
+}
+
+.toast-stack .toast {
+  position: static;
+  max-width: none;
 }
 
 input[aria-invalid="true"] {
@@ -638,6 +710,12 @@ input[aria-invalid="true"] {
   color: #ffffff;
 }
 
+.history-pair__chip--skip {
+  background: linear-gradient(180deg, rgba(255, 191, 71, 0.18), rgba(255, 191, 71, 0.08));
+  color: #ffffff;
+  border-color: rgba(255,191,71,0.28);
+}
+
 .history-pair__card {
   grid-column: 1 / -1;
   padding: 18px;
@@ -651,39 +729,80 @@ input[aria-invalid="true"] {
   margin-bottom: 14px;
 }
 
+.history-pair__specials,
 .history-pair__honors {
   margin: 10px 0 14px;
   gap: 3px;
 }
 
+.history-pair__specials .game-topbar__specials-label,
 .history-pair__honors .game-topbar__honors-label {
   font-size: 0.75rem;
 }
 
+.history-pair__specials .game-topbar__specials-list,
 .history-pair__honors .game-topbar__honors-list {
   gap: 4px;
 }
 
+.history-pair__specials .game-topbar__specials-item,
+.history-pair__specials .game-topbar__specials-empty,
 .history-pair__honors .game-topbar__honors-item,
 .history-pair__honors .game-topbar__honors-empty {
   min-height: 22px;
   padding: 2px 6px;
 }
 
+.history-pair__specials .game-topbar__specials-item,
 .history-pair__honors .game-topbar__honors-item {
   font-size: 0.74rem;
 }
 
+.history-pair__specials .game-topbar__specials-icon,
 .history-pair__honors .game-topbar__honors-icon {
   width: 1.1em;
   height: 1.1em;
   font-size: 0.76rem;
 }
 
+.history-pair__honors-delta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 6px;
+  margin-left: 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.history-pair__honors-delta--up {
+  background: linear-gradient(180deg, rgba(75, 200, 120, 0.18), rgba(75, 200, 120, 0.08));
+  color: #ffffff;
+  border: 1px solid rgba(75,200,120,0.22);
+}
+
+.history-pair__honors-delta--down {
+  background: linear-gradient(180deg, rgba(255, 80, 80, 0.18), rgba(255, 80, 80, 0.08));
+  color: #ffffff;
+  border: 1px solid rgba(255,80,80,0.22);
+}
+
+.history-pair__honors-delta--neutral {
+  background: rgba(255,255,255,0.02);
+  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
 .history-pair__content {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.history-pair__content--single {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (max-width: 720px) {

@@ -44,13 +44,13 @@ export function SettingsPanel({ settings, onChange }: Props) {
   }
 
   function applyChanges() {
-    const hsRes = clampInt(handSizeStr, 1, 9);
+    const hsRes = clampInt(handSizeStr, 4, 9);
     const numsRes = clampInt(numbersStr, 1, 12);
     const windsRes = clampInt(windsStr, 1, 12);
     const dragonsRes = clampInt(dragonsStr, 1, 12);
 
     const messages: string[] = [];
-    if (hsRes.adjusted) messages.push(`Hand size adjusted to ${hsRes.value} (allowed 1–9)`);
+    if (hsRes.adjusted) messages.push(`Hand size adjusted to ${hsRes.value} (allowed 4–9)`);
     if (numsRes.adjusted) messages.push(`Number tiles copies adjusted to ${numsRes.value} (allowed 1–12)`);
     if (windsRes.adjusted) messages.push(`Wind tiles copies adjusted to ${windsRes.value} (allowed 1–12)`);
     if (dragonsRes.adjusted) messages.push(`Dragon tiles copies adjusted to ${dragonsRes.value} (allowed 1–12)`);
@@ -86,11 +86,11 @@ export function SettingsPanel({ settings, onChange }: Props) {
         <div className="setting-row">
           <label>
             Hand size
-            <span className="input-help" aria-hidden title="Number of tiles in the player's hand. Typical values: 3-5.">i</span>
+            <span className="input-help" aria-hidden title="Number of tiles in the player's hand. Typical values: 4-5.">i</span>
           </label>
           <input
             type="number"
-            min={1}
+            min={4}
             max={9}
             value={handSizeStr}
             onChange={(e) => { setHandSizeStr(e.target.value); }}

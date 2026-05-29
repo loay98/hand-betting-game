@@ -33,6 +33,14 @@ export interface LeaderboardEntry {
   readonly createdAt: string;
 }
 
+export interface RoundHistoryEntry {
+  readonly prev: HandRecord;
+  readonly next: HandRecord;
+  readonly honorValuesAfter: Record<string, number>;
+  readonly skipped?: boolean;
+  readonly reason?: 'shortDraw';
+}
+
 export interface GameState {
   readonly status: Screen;
   readonly score: number;
@@ -40,11 +48,13 @@ export interface GameState {
   readonly drawPile: Tile[];
   readonly discardPile: Tile[];
   readonly currentHand: HandRecord | null;
-  readonly history: { prev: HandRecord; next: HandRecord }[];
+  readonly history: RoundHistoryEntry[];
   readonly exhaustionCount: number;
   readonly lastOutcome: RoundOutcome | null;
   readonly lastBet?: BetChoice | null;
+  readonly toasts: string[];
   readonly leaderboard: LeaderboardEntry[];
+  readonly honorValues: Record<string, number>;
   readonly settings?: {
     readonly handSize: number;
     readonly copiesPerCategory: {
