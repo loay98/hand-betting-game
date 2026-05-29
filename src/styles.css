@@ -108,6 +108,18 @@ h1, h2, p {
   font-size: 0.9rem;
 }
 
+.stat-card__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.stat-card__label .input-help {
+  flex: 0 0 auto;
+}
+
 .stat-card strong {
   font-size: 2rem;
 }
@@ -411,6 +423,21 @@ input[aria-invalid="true"] {
 .game-over-card {
   display: grid;
   gap: 16px;
+}
+
+.game-over-tip {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.game-over-tip strong {
+  color: var(--text);
 }
 
 @media (max-width: 920px) {

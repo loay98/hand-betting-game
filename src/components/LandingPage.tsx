@@ -33,7 +33,16 @@ export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }
             <strong>{settings.handSize}</strong>
           </div>
           <div className="stat-card">
-            <span>Game overs</span>
+            <div className="stat-card__label">
+              Game overs
+              <span
+                className="input-help"
+                aria-hidden
+                title="A match ends when any special tile reaches 0 or 10, or when the draw pile runs empty three times."
+              >
+                i
+              </span>
+            </div>
             <strong>2 paths</strong>
           </div>
         </div>
