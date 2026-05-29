@@ -4,6 +4,7 @@ type HistoryMetaProps =
   | {
       kind: 'skipped';
       roundNumber: number;
+      reason?: 'shortDraw' | 'tie' | undefined;
     }
   | {
       kind: 'round';
@@ -18,8 +19,17 @@ export function HistoryMeta(props: HistoryMetaProps) {
     return (
       <div className="history-pair__meta">
         <Chip variant="skip">Auto skip</Chip>
-        <Chip>Not enough tiles</Chip>
-        <Chip>Reshuffled</Chip>
+        {props.reason === 'tie' ? (
+          <>
+            <Chip variant="push">Tie</Chip>
+            <Chip>0 pts</Chip>
+          </>
+        ) : (
+          <>
+            <Chip>Not enough tiles</Chip>
+            <Chip>Reshuffled</Chip>
+          </>
+        )}
       </div>
     );
   }

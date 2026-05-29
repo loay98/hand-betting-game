@@ -132,8 +132,8 @@ export function GameView() {
                   <div className="history-pair__card panel">
                     {entry.skipped ? (
                       <div className="history-pair__header">
-                        <p className="eyebrow">Skipped round {entry.prev.roundNumber}</p>
-                        <HistoryMeta kind="skipped" roundNumber={entry.prev.roundNumber} />
+                        <p className="eyebrow">Round {entry.prev.roundNumber}</p>
+                        <HistoryMeta kind="skipped" roundNumber={entry.prev.roundNumber} reason={entry.reason} />
                       </div>
                     ) : (
                       <div className="history-pair__header">
@@ -148,9 +148,9 @@ export function GameView() {
                       </div>
                     )}
                     <HonorValuesRow honorValues={entry.honorValuesAfter} previousTiles={entry.prev.tiles} history />
-                    <div className={`history-pair__content ${entry.skipped ? 'history-pair__content--single' : ''}`}>
-                      <HandPreview hand={entry.prev} title={entry.skipped ? 'Current hand' : 'Starting hand'} tone="history" />
-                      {!entry.skipped ? <HandPreview hand={entry.next} title="Resulting hand" tone="history" /> : null}
+                    <div className={`history-pair__content ${entry.skipped && entry.reason !== 'tie' ? 'history-pair__content--single' : ''}`}>
+                      <HandPreview hand={entry.prev} title={entry.prev.roundNumber === 1 ? 'Starting hand' : 'Current hand'} tone="history" />
+                      {!entry.skipped || entry.reason === 'tie' ? <HandPreview hand={entry.next} title="Resulting hand" tone="history" /> : null}
                     </div>
                 </div>
               </div>

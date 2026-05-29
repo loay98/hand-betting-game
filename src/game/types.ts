@@ -52,7 +52,7 @@ export interface RoundHistoryEntry {
   readonly next: HandRecord;
   readonly honorValuesAfter: Record<string, number>;
   readonly skipped?: boolean;
-  readonly reason?: 'shortDraw';
+  readonly reason?: 'shortDraw' | 'tie';
 }
 
 export interface GameState {

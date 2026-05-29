@@ -24,12 +24,12 @@ export function HandPreview({ hand, title, tone = 'active', lastBet, lastOutcome
           {tone === 'active' && hand.roundNumber > 1 ? (
             <>
               <span>{`Last bet: ${lastBet ?? '—'}`}</span>
-              <span>{`Last outcome: ${lastOutcome ?? '—'}`}</span>
+              <span>{`Last outcome: ${lastOutcome === 'push' ? 'tie' : lastOutcome ?? '—'}`}</span>
             </>
           ) : (
             <>
               <span>{hand.bet ? `Bet: ${hand.bet}` : 'Opening hand'}</span>
-              <span>{hand.outcome ? `Outcome: ${hand.outcome}` : 'Awaiting bet'}</span>
+              <span>{hand.outcome === 'push' ? 'Outcome: tie' : hand.outcome ? `Outcome: ${hand.outcome}` : 'Awaiting bet'}</span>
             </>
           )}
         </div>

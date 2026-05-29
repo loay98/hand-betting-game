@@ -86,7 +86,7 @@ function autoSkipShortRounds(state: GameState): GameState {
 
   const returnedTilesHand = createHandRecord({
     hand: state.currentHand.tiles,
-    roundNumber: state.round + 1,
+    roundNumber: state.currentHand.roundNumber, // Keep the same round number for the returned tiles
     bet: null,
     outcome: null,
     roundPoints: 0,
@@ -102,17 +102,27 @@ function autoSkipShortRounds(state: GameState): GameState {
     reason: 'shortDraw',
   };
 
+  // Create a new hand for the next round with the incremented round number
+  const nextRoundHand = createHandRecord({
+    hand: state.currentHand.tiles,
+    roundNumber: state.round + 1,
+    bet: null,
+    outcome: null,
+    roundPoints: 0,
+    comparedTo: state.currentHand.comparedTo,
+  });
+
   return {
     ...state,
     round: state.round + 1,
     drawPile: reshuffled,
     discardPile: [],
-    currentHand: state.currentHand,
+    currentHand: nextRoundHand,
     history: [skippedEntry, ...state.history],
     exhaustionCount: state.exhaustionCount + 1,
     lastOutcome: null,
     lastBet: null,
-    toasts: appendToasts(state.toasts, ['Round skipped automatically. Not enough tiles to draw a full hand.', 'Reshuffling deck.']),
+    toasts: appendToasts(state.toasts, ['Not enough tiles to draw a full hand.', 'Reshuffling deck.']),
   };
 }
 
@@ -219,7 +229,20 @@ function reduceGameState(state: GameState, action: GameAction): GameState {
         comparedTo: resolvedNextHand.comparedTo,
       };
 
-      let historyEntry = { prev: resolvedPrevHand, next: resolvedNextHand, honorValuesAfter: nextHonorValues } as any;
+      // For history, show the next hand with honor values as they were before the outcome was applied
+      const historyNextHand = createHandRecord({
+        hand: applyHonorValuesToHand(resolvedNextHand.tiles, state.honorValues), // Use honor values before outcome
+        roundNumber: resolvedNextHand.roundNumber,
+        bet: resolvedNextHand.bet,
+        outcome: resolvedNextHand.outcome,
+        roundPoints: nextRoundPoints,
+        comparedTo: resolvedNextHand.comparedTo,
+      });
+
+      let historyEntry = { prev: resolvedPrevHand, next: historyNextHand, honorValuesAfter: nextHonorValues } as any;
+
+      let nextRound = round.nextRound;
+      let shouldAutoSkip = false;
 
       if (round.outcome === 'push') {
         const clearedPrev = { ...state.currentHand, outcome: null, roundPoints: 0, bet: null, comparedTo: resolvedNextHand.comparedTo };
@@ -228,14 +251,18 @@ function reduceGameState(state: GameState, action: GameAction): GameState {
         resolvedPrevHand = clearedPrev;
         nextActiveHand = createHandRecord({
           hand: applyHonorValuesToHand(clearedNext.tiles, nextHonorValues),
-          roundNumber: clearedNext.roundNumber,
+          roundNumber: state.round, // Use current round number for the next hand (tie case)
           bet: null,
           outcome: null,
           roundPoints: 0,
           comparedTo: clearedNext.comparedTo,
         });
 
-        historyEntry = { prev: clearedPrev, next: clearedNext, honorValuesAfter: nextHonorValues, skipped: true };
+        historyEntry = { prev: clearedPrev, next: clearedNext, honorValuesAfter: nextHonorValues, skipped: true, reason: 'tie' };
+        nextRound = state.round; // Don't increment round number for tie, except if it's the first round
+        if (state.round === 1) {
+          nextRound = state.round + 1; // Increment round number if first round was tie
+        }
       }
 
       const history = [historyEntry, ...state.history];
@@ -244,7 +271,7 @@ function reduceGameState(state: GameState, action: GameAction): GameState {
         ? saveLeaderboard(
             state.leaderboard,
             nextScore,
-            round.nextRound,
+            nextRound,
             createFreshDeck(buildCopyConfig(state.settings.copiesPerCategory) as any).length,
             state.settings.handSize,
             round.updatedExhaustionCount,
@@ -257,7 +284,7 @@ function reduceGameState(state: GameState, action: GameAction): GameState {
         ...state,
         status: round.isGameOver ? 'gameOver' : 'game',
         score: nextScore,
-        round: round.nextRound,
+        round: nextRound,
         drawPile: nextDrawPile,
         discardPile: nextDiscardPile,
         currentHand: nextActiveHand,
@@ -265,12 +292,21 @@ function reduceGameState(state: GameState, action: GameAction): GameState {
         exhaustionCount: round.updatedExhaustionCount,
         lastOutcome: round.outcome,
         lastBet: action.choice,
-        toasts: shouldReshuffleNow ? appendToasts(state.toasts, ['Reshuffling deck.']) : state.toasts,
+        toasts: shouldReshuffleNow 
+          ? appendToasts(state.toasts, ['Reshuffling deck.'])
+          : round.outcome === 'push' 
+            ? appendToasts(state.toasts, ['Tie detected! Both hands had the same total. Round skipped with no points.'])
+            : state.toasts,
         leaderboard: nextLeaderboard,
         honorValues: nextHonorValues,
       };
 
-      return autoSkipShortRounds(playedState);
+      // Only auto-skip if it wasn't a tie round
+      if (round.outcome !== 'push') {
+        shouldAutoSkip = true;
+      }
+
+      return shouldAutoSkip ? autoSkipShortRounds(playedState) : playedState;
     }
     case 'exit':
     case 'return-home':

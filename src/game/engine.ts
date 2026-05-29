@@ -203,10 +203,15 @@ export function resolveRound(params: {
   const previousTotal = params.currentHand.total;
   const { hand: rawNextHand, remainingPile } = drawHand(params.nextDrawPile, params.currentHand.tiles.length);
   const nextTotalBeforeResolve = calculateHandTotal(rawNextHand);
-  const isCorrect = evaluateBet(params.choice, previousTotal, nextTotalBeforeResolve);
-  const outcome: RoundOutcome = isCorrect ? 'win' : 'loss';
+  // Determine the result of the bet. If the totals are equal we treat it as a "push"
+  // (i.e., the round is skipped with no reward or penalty). Otherwise we check
+  // whether the player's choice matches the higher/lower comparison.
+  const comparison = compareHands(previousTotal, nextTotalBeforeResolve);
+  const outcome: RoundOutcome =
+    comparison === 'equal' ? 'push' : evaluateBet(params.choice, previousTotal, nextTotalBeforeResolve) ? 'win' : 'loss';
   const adjustedCurrentHand = applyOutcomeToHand(params.currentHand.tiles, outcome);
-  const roundPoints = isCorrect ? calculateHonorTileTotal(rawNextHand) : 0;
+  // Points are awarded only on a win; a loss, push (tie), or skip yields 0.
+  const roundPoints = outcome === 'win' ? calculateHonorTileTotal(rawNextHand) : 0;
   const updatedDiscardPile = [...params.discardPile, ...adjustedCurrentHand.map((tile) => ({ ...tile }))];
   const nextHand = createHandRecord({
     hand: rawNextHand,
