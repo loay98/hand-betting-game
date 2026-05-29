@@ -460,6 +460,13 @@ input[aria-invalid="true"] {
   line-height: 1.6;
 }
 
+.rules-card__title {
+  margin: 0 0 10px;
+  font-size: clamp(1.2rem, 2vw, 2rem);
+  line-height: 1.1;
+  color: var(--text);
+}
+
 .rules-card > strong {
   color: var(--text);
 }
@@ -470,6 +477,11 @@ input[aria-invalid="true"] {
   margin-top: 10px;
 }
 
+.rules-card__section-label {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
 .rules-card__powers div {
   display: grid;
   gap: 2px;
@@ -477,6 +489,11 @@ input[aria-invalid="true"] {
 
 .rules-card__powers strong {
   color: var(--text);
+}
+
+.rules-card__powers span {
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .rules-card__current-values {

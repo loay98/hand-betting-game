@@ -73,8 +73,9 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
             <button className="primary-button" type="button" onClick={onBetLower}>Bet Lower</button>
           </div>
           <div className="rules-card">
-            <p className="eyebrow">Tile rules</p>
+            <h2 className="rules-card__title">Tile rules</h2>
             <p>Number tiles keep face value.</p>
+            <p className="eyebrow rules-card__section-label">Special titles</p>
             <div className="rules-card__powers">
               <div>
                 <strong>Winds</strong>
