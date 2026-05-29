@@ -1,5 +1,5 @@
       import { HandPreview } from './HandPreview';
-      import { SPECIAL_TILE_DEFINITIONS } from '../game/engine';
+      import { HONOR_TILE_DEFINITIONS } from '../game/engine';
 import type { GameState } from '../game/types';
 
 interface GameViewProps {
@@ -16,41 +16,47 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
     return null;
   }
 
-  const activeSpecialValues = new Map(
-    currentHand.tiles
-      .filter((tile) => tile.kind !== 'number')
-      .map((tile) => [`${tile.kind}:${tile.label}`, tile.value]),
-  );
+  const renderHonorValues = (tiles: typeof currentHand.tiles, tone: 'topbar' | 'history' = 'topbar') => {
+    const honorValues = new Map(
+      tiles
+        .filter((tile) => tile.kind !== 'number')
+        .map((tile) => [`${tile.kind}:${tile.label}`, tile.value]),
+    );
+
+    return (
+      <div className={`game-topbar__honors ${tone === 'history' ? 'history-pair__honors' : ''}`}>
+        <span className="game-topbar__honors-label">Honor values</span>
+        <div className="game-topbar__honors-list">
+          {HONOR_TILE_DEFINITIONS.map((tile) => {
+            const value = honorValues.get(`${tile.kind}:${tile.label}`) ?? tile.faceValue;
+
+            return (
+              <span
+                key={`${tile.kind}:${tile.label}`}
+                className={`game-topbar__honors-item game-topbar__honors-item--${tile.kind}`}
+                aria-label={`${tile.label} ${value}`}
+                title={`${tile.label} ${value}`}
+              >
+                <span className="game-topbar__honors-icon" aria-hidden="true">
+                  {tile.symbol}
+                </span>
+                <span className="game-topbar__honors-value">{value}</span>
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <main className="game-shell">
       <header className="game-topbar panel">
         <div className="game-topbar__round">
-          <p className="game-topbar__round-label">Round {state.round}</p>
+          <p className="game-topbar__round-label">Round {currentHand.roundNumber}</p>
         </div>
         <div className="game-topbar__meta">
-          <div className="game-topbar__specials">
-            <span className="game-topbar__specials-label">Special values</span>
-            <div className="game-topbar__specials-list">
-              {SPECIAL_TILE_DEFINITIONS.map((tile) => {
-                const value = activeSpecialValues.get(`${tile.kind}:${tile.label}`) ?? tile.faceValue;
-
-                return (
-                  <span
-                    key={`${tile.kind}:${tile.label}`}
-                    className={`game-topbar__specials-item game-topbar__specials-item--${tile.kind}`}
-                    aria-label={`${tile.label} ${value}`}
-                    title={`${tile.label} ${value}`}
-                  >
-                    <span className="game-topbar__specials-icon" aria-hidden="true">
-                      {tile.symbol}
-                    </span>
-                    <span className="game-topbar__specials-value">{value}</span>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
+          {renderHonorValues(currentHand.tiles)}
           <div className="game-topbar__stats">
             <span>Score {state.score}</span>
             <span>Draw {state.drawPile.length}</span>
@@ -62,7 +68,7 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
       </header>
 
       <section className="game-grid">
-        <HandPreview hand={currentHand} title="Active hand" />
+        <HandPreview hand={currentHand} title="Active hand" lastBet={state.lastBet ?? null} lastOutcome={state.lastOutcome ?? null} />
         <section className="panel action-panel">
           <div className="panel__heading">
             <p className="eyebrow">Betting</p>
@@ -75,7 +81,7 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
           <div className="rules-card">
             <h2 className="rules-card__title">Tile rules</h2>
             <p>Number tiles keep face value.</p>
-            <p className="eyebrow rules-card__section-label">Special titles</p>
+            <p className="eyebrow rules-card__section-label">Honor titles</p>
             <div className="rules-card__powers">
               <div>
                 <strong>Winds</strong>
@@ -99,8 +105,32 @@ export function GameView({ state, onBetHigher, onBetLower, onExit }: GameViewPro
           <p className="panel__empty">No prior hands yet.</p>
         ) : (
           <div className="history-panel__list">
-            {state.history.map((hand) => (
-              <HandPreview key={hand.id} hand={hand} title={`Round ${hand.roundNumber}`} tone="history" />
+            {state.history.map((entry) => (
+              <div key={entry.prev.id} className="history-pair">
+                <div className="history-pair__card panel">
+                  {(() => {
+                    const bet = entry.next.bet ?? null;
+                    const outcome = entry.prev.outcome ?? null;
+                    const pts = entry.prev.roundPoints ?? 0;
+
+                    return (
+                      <div className="history-pair__header">
+                        <p className="eyebrow">Round {entry.prev.roundNumber}</p>
+                        <div className="history-pair__meta">
+                          <span className="history-pair__chip">Bet: {bet ?? '—'}</span>
+                          <span className={`history-pair__chip ${outcome ? `history-pair__chip--${outcome}` : ''}`}>Outcome: {outcome ?? '—'}</span>
+                          <span className="history-pair__chip">Pts: {pts}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {renderHonorValues(entry.prev.tiles, 'history')}
+                  <div className="history-pair__content">
+                    <HandPreview hand={entry.prev} title="Starting hand" tone="history" />
+                    <HandPreview hand={entry.next} title="Resulting hand" tone="history" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}

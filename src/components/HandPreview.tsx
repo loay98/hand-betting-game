@@ -1,13 +1,15 @@
-import type { HandRecord } from '../game/types';
+import type { HandRecord, BetChoice, RoundOutcome } from '../game/types';
 import { TileCard } from './TileCard';
 
 interface HandPreviewProps {
   hand: HandRecord;
   title: string;
   tone?: 'active' | 'history';
+  lastBet?: BetChoice | null;
+  lastOutcome?: RoundOutcome | null;
 }
 
-export function HandPreview({ hand, title, tone = 'active' }: HandPreviewProps) {
+export function HandPreview({ hand, title, tone = 'active', lastBet, lastOutcome }: HandPreviewProps) {
   return (
     <section className={`panel hand-preview hand-preview--${tone}`}>
       <div className="panel__heading">
@@ -19,10 +21,21 @@ export function HandPreview({ hand, title, tone = 'active' }: HandPreviewProps) 
           <TileCard key={tile.uid} tile={tile} compact={tone === 'history'} />
         ))}
       </div>
-      <div className="hand-preview__footer">
-        <span>{hand.bet ? `Bet: ${hand.bet}` : 'Opening hand'}</span>
-        <span>{hand.outcome ? `Outcome: ${hand.outcome}` : 'Awaiting bet'}</span>
-      </div>
+      {tone !== 'history' ? (
+        <div className="hand-preview__footer">
+          {tone === 'active' && hand.roundNumber > 1 ? (
+            <>
+              <span>{`Last bet: ${lastBet ?? '—'}`}</span>
+              <span>{`Last outcome: ${lastOutcome ?? '—'}`}</span>
+            </>
+          ) : (
+            <>
+              <span>{hand.bet ? `Bet: ${hand.bet}` : 'Opening hand'}</span>
+              <span>{hand.outcome ? `Outcome: ${hand.outcome}` : 'Awaiting bet'}</span>
+            </>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

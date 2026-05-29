@@ -30,7 +30,7 @@ const DRAGON_TILES: Array<{ label: string; symbol: string }> = [
   { label: 'White Dragon', symbol: '白' },
 ];
 
-export const SPECIAL_TILE_DEFINITIONS: TileDefinition[] = [
+export const HONOR_TILE_DEFINITIONS: TileDefinition[] = [
   ...WIND_TILES.map((tile) => ({ kind: 'wind' as const, label: tile.label, faceValue: 5, symbol: tile.symbol })),
   ...DRAGON_TILES.map((tile) => ({ kind: 'dragon' as const, label: tile.label, faceValue: 5, symbol: tile.symbol })),
 ];
@@ -61,7 +61,7 @@ export function createFreshDeck(copiesPerTile: CopiesConfig = DEFAULT_COPIES_PER
   for (let faceValue = 1; faceValue <= 9; faceValue += 1) {
     for (const suit of NUMBER_SUITS) {
       for (let copy = 0; copy < numberCopies; copy += 1) {
-        deck.push(createTile({ kind: 'number', label: `${faceValue} of ${suit.suit}`, faceValue, symbol: `${faceValue}${suit.symbol}` }));
+        deck.push(createTile({ kind: 'number', label: suit.suit, faceValue, symbol: `${faceValue}${suit.symbol}` }));
       }
     }
   }

@@ -19,6 +19,7 @@ function createInitialState(): GameState {
     history: [],
     exhaustionCount: 0,
     lastOutcome: null,
+    lastBet: null,
     leaderboard: seedLeaderboard(loadLeaderboard()),
   };
 }
@@ -45,7 +46,8 @@ function reducer(state: GameState, action: Action): GameState {
         currentHand: hand,
         history: [],
         exhaustionCount: 0,
-        lastOutcome: null,
+          lastOutcome: null,
+          lastBet: null,
         leaderboard: seedLeaderboard(loadLeaderboard()),
         settings: { handSize, copiesPerCategory: typeof copiesConfig === 'object' ? copiesConfig as { numbers: number; winds: number; dragons: number } : { numbers: copiesConfig as number, winds: copiesConfig as number, dragons: copiesConfig as number } },
       };
@@ -70,7 +72,14 @@ function reducer(state: GameState, action: Action): GameState {
         currentScore: state.score,
       });
 
-      const history = [state.currentHand, ...state.history].slice(0, 6);
+      const resolvedPrevHand = {
+        ...state.currentHand,
+        outcome: round.outcome,
+        roundPoints: round.nextHand.roundPoints,
+        comparedTo: round.nextHand.comparedTo,
+      };
+
+      const history = [{ prev: resolvedPrevHand, next: round.nextHand }, ...state.history].slice(0, 6);
       const nextLeaderboard = round.isGameOver
         ? saveLeaderboard(state.leaderboard, round.updatedScore, round.nextRound)
         : state.leaderboard;
@@ -86,6 +95,7 @@ function reducer(state: GameState, action: Action): GameState {
         history,
         exhaustionCount: round.updatedExhaustionCount,
         lastOutcome: round.outcome,
+          lastBet: action.choice ?? null,
         leaderboard: nextLeaderboard,
       };
     }
@@ -110,7 +120,8 @@ function reducer(state: GameState, action: Action): GameState {
         currentHand: hand,
         history: [],
         exhaustionCount: 0,
-        lastOutcome: null,
+          lastOutcome: null,
+          lastBet: null,
       };
     }
     default:

@@ -40,9 +40,10 @@ export interface GameState {
   readonly drawPile: Tile[];
   readonly discardPile: Tile[];
   readonly currentHand: HandRecord | null;
-  readonly history: HandRecord[];
+  readonly history: { prev: HandRecord; next: HandRecord }[];
   readonly exhaustionCount: number;
   readonly lastOutcome: RoundOutcome | null;
+  readonly lastBet?: BetChoice | null;
   readonly leaderboard: LeaderboardEntry[];
   readonly settings?: {
     readonly handSize: number;

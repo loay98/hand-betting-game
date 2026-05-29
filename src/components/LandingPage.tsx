@@ -38,7 +38,7 @@ export function LandingPage({ leaderboard, onStart, settings, onSettingsChange }
               <span
                 className="input-help"
                 aria-hidden
-                title="A match ends when any special tile reaches 0 or 10, or when the draw pile runs empty three times."
+                title="A match ends when any honor tile reaches 0 or 10, or when the draw pile runs empty three times."
               >
                 i
               </span>

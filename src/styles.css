@@ -187,27 +187,27 @@ h1, h2, p {
   color: var(--muted);
 }
 
-.game-topbar__specials {
+.game-topbar__honors {
   display: grid;
   gap: 4px;
   color: var(--muted);
 }
 
-.game-topbar__specials-label {
+.game-topbar__honors-label {
   font-size: 0.8rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--accent);
 }
 
-.game-topbar__specials-list {
+.game-topbar__honors-list {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.game-topbar__specials-item,
-.game-topbar__specials-empty {
+.game-topbar__honors-item,
+.game-topbar__honors-empty {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -218,24 +218,24 @@ h1, h2, p {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.game-topbar__specials-item {
+.game-topbar__honors-item {
   font-size: 0.78rem;
   line-height: 1;
   color: var(--text);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
 }
 
-.game-topbar__specials-item--wind {
+.game-topbar__honors-item--wind {
   background: linear-gradient(180deg, rgba(75, 163, 255, 0.28), rgba(75, 163, 255, 0.12));
   border-color: rgba(75, 163, 255, 0.35);
 }
 
-.game-topbar__specials-item--dragon {
+.game-topbar__honors-item--dragon {
   background: linear-gradient(180deg, rgba(255, 90, 90, 0.28), rgba(255, 90, 90, 0.12));
   border-color: rgba(255, 90, 90, 0.35);
 }
 
-.game-topbar__specials-icon {
+.game-topbar__honors-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +247,7 @@ h1, h2, p {
   background: rgba(255, 255, 255, 0.18);
 }
 
-.game-topbar__specials-value {
+.game-topbar__honors-value {
   min-width: 1ch;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
@@ -402,6 +402,7 @@ input[aria-invalid="true"] {
   align-items: space-between;
   gap: 10px;
   transition: transform 180ms ease, border-color 180ms ease;
+  overflow: hidden;
 }
 
 .tile-card--compact {
@@ -425,11 +426,24 @@ input[aria-invalid="true"] {
   gap: 8px;
   align-items: end;
   color: var(--muted);
+  min-width: 0;
+}
+
+.tile-card__meta span {
+  min-width: 0;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  font-size: 0.78rem;
+  line-height: 1.15;
 }
 
 .tile-card__meta strong {
   color: var(--text);
   font-size: 1.1rem;
+  flex: 0 0 auto;
 }
 
 .tile-card--number {
@@ -565,7 +579,126 @@ input[aria-invalid="true"] {
 }
 
 .history-panel__list {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.history-panel {
+  max-height: min(72vh, 900px);
+  overflow-y: auto;
+  padding-right: 18px;
+}
+
+.history-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.history-pair__header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.history-pair__meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.history-pair__chip {
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.8rem;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.history-pair__chip--win {
+  background: linear-gradient(180deg, rgba(75, 200, 120, 0.18), rgba(75, 200, 120, 0.08));
+  color: #ffffff;
+  border-color: rgba(75,200,120,0.28);
+}
+
+.history-pair__chip--loss {
+  background: linear-gradient(180deg, rgba(255, 80, 80, 0.18), rgba(255, 80, 80, 0.08));
+  color: #ffffff;
+  border-color: rgba(255,80,80,0.28);
+}
+
+.history-pair__chip--push {
+  background: rgba(255,255,255,0.02);
+  color: #ffffff;
+}
+
+.history-pair__card {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.history-pair__card .history-pair__header {
+  margin-bottom: 14px;
+}
+
+.history-pair__honors {
+  margin: 10px 0 14px;
+  gap: 3px;
+}
+
+.history-pair__honors .game-topbar__honors-label {
+  font-size: 0.75rem;
+}
+
+.history-pair__honors .game-topbar__honors-list {
+  gap: 4px;
+}
+
+.history-pair__honors .game-topbar__honors-item,
+.history-pair__honors .game-topbar__honors-empty {
+  min-height: 22px;
+  padding: 2px 6px;
+}
+
+.history-pair__honors .game-topbar__honors-item {
+  font-size: 0.74rem;
+}
+
+.history-pair__honors .game-topbar__honors-icon {
+  width: 1.1em;
+  height: 1.1em;
+  font-size: 0.76rem;
+}
+
+.history-pair__content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .history-panel {
+    max-height: none;
+    padding-right: 18px;
+  }
+
+  .history-panel__list {
+    grid-template-columns: 1fr;
+  }
+
+  .history-pair {
+    grid-template-columns: 1fr;
+  }
 }
 
 .game-over-shell {
